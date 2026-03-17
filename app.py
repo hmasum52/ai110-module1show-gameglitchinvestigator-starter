@@ -6,6 +6,7 @@ def get_range_for_difficulty(difficulty: str):
         return 1, 20
     if difficulty == "Normal":
         return 1, 100
+    # bug: difficulty range is logically incorrect (hard should be higher than normal) # we can swap with normal to fix this
     if difficulty == "Hard":
         return 1, 50
     return 1, 100
@@ -34,6 +35,7 @@ def check_guess(guess, secret):
         return "Win", "🎉 Correct!"
 
     try:
+        # bug: hints are backwards
         if guess > secret:
             return "Too High", "📈 Go HIGHER!"
         else:
@@ -55,6 +57,7 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
         return current_score + points
 
     if outcome == "Too High":
+        # bug: score changes are inconsistent, sometimes based on attempt number and sometimes not, leading to unpredictable scoring
         if attempt_number % 2 == 0:
             return current_score + 5
         return current_score - 5
@@ -77,6 +80,7 @@ difficulty = st.sidebar.selectbox(
     index=1,
 )
 
+# bug: attempt limits are inconsistent with difficulty (hard has fewer attempts than easy), and the mapping is not intuitive
 attempt_limit_map = {
     "Easy": 6,
     "Normal": 8,
@@ -93,6 +97,7 @@ if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
 if "attempts" not in st.session_state:
+    # bug: attempts should start at 0, but starts at 1, giving the player one less attempt than intended
     st.session_state.attempts = 1
 
 if "score" not in st.session_state:
@@ -107,6 +112,7 @@ if "history" not in st.session_state:
 st.subheader("Make a guess")
 
 st.info(
+    # bug: hardcoded range in the message doesn't match the actual range based on difficulty
     f"Guess a number between 1 and 100. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
@@ -131,8 +137,10 @@ with col2:
 with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
+# Bug: New game doesn't reset the state
 if new_game:
     st.session_state.attempts = 0
+    # bug: hardcode to 1 - 100, doesn't respect difficulty setting
     st.session_state.secret = random.randint(1, 100)
     st.success("New game started.")
     st.rerun()
@@ -145,6 +153,7 @@ if st.session_state.status != "playing":
     st.stop()
 
 if submit:
+    # bug: attempts increment before validating the guess, so invalid guesses still consume attempts
     st.session_state.attempts += 1
 
     ok, guess_int, err = parse_guess(raw_guess)
@@ -156,6 +165,7 @@ if submit:
         st.session_state.history.append(guess_int)
 
         if st.session_state.attempts % 2 == 0:
+            # bug: secret is sometimes treated as a string and sometimes as an int, causing inconsistent behavior
             secret = str(st.session_state.secret)
         else:
             secret = st.session_state.secret

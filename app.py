@@ -102,6 +102,9 @@ if "status" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
+if "last_message" not in st.session_state:
+    st.session_state.last_message = None
+
 st.subheader("Make a guess")
 
 st.info(
@@ -129,12 +132,16 @@ with col2:
 with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
+if st.session_state.last_message:
+    st.warning(st.session_state.last_message)
+
 if new_game:
     st.session_state.attempts = 0
     st.session_state.secret = random.randint(low, high)
     st.session_state.score = 0
     st.session_state.status = "playing"
     st.session_state.history = []
+    st.session_state.last_message = None
     st.success("New game started.")
     st.rerun()
 
@@ -160,7 +167,7 @@ if submit:
         outcome, message = check_guess(guess_int, secret)
 
         if show_hint:
-            st.warning(message)
+            st.session_state.last_message = message
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -183,6 +190,7 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+        st.rerun()
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")
